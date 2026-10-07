@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>中文大冒险 — Уроки 4–7</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh; display: flex; justify-content: center;
+    align-items: center; padding: 15px;
+  }
+  #app {
+    background: #fff; border-radius: 25px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    max-width: 650px; width: 100%; padding: 25px;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid #f0f0f0;
+  }
+  .score-box {
+    background: #ff9f43; color: white; padding: 8px 18px;
+    border-radius: 20px; font-weight: bold; font-size: 16px;
+  }
+  .progress-bar {
+    flex: 1; height: 12px; background: #eee; border-radius: 10px;
+    margin: 0 15px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%; background: linear-gradient(90deg, #2ecc71, #27ae60);
+    width: 0%; transition: width 0.5s ease; border-radius: 10px;
+  }
+  h1 { font-size: 26px; color: #2c3e50; text-align: center; margin-bottom: 10px; }
+  h2 { font-size: 20px; color: #34495e; margin-bottom: 15px; }
+  .guide {
+    display: flex; align-items: center; gap: 12px; background: #f8f9fa;
+    padding: 12px 15px; border-radius: 15px; margin-bottom: 18px;
+    border-left: 5px solid #667eea;
+  }
+  .guide-avatar {
+    font-size: 40px; background: #ffeaa7; border-radius: 50%;
+    width: 55px; height: 55px; display: flex; align-items: center;
+    justify-content: center; flex-shrink: 0;
+  }
+  .guide-text { font-size: 15px; color: #555; line-height: 1.4; }
+  .guide-text strong { color: #667eea; }
+  .stage { display: none; animation: fadeIn 0.4s; }
+  .stage.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .btn {
+    background: #667eea; color: white; border: none; padding: 12px 20px;
+    border-radius: 12px; font-size: 15px; cursor: pointer; transition: 0.2s;
+    font-weight: 600; margin-top: 10px;
+  }
+  .btn:hover { background: #5568d3; transform: translateY(-2px); }
+  .btn-green { background: #2ecc71; }
+  .btn-green:hover { background: #27ae60; }
+  .btn-audio {
+    background: #9b59b6; font-size: 18px; padding: 16px; margin-bottom: 10px;
+    width: 100%;
+  }
+  .btn-audio:hover { background: #8e44ad; }
+  .options { display: grid; gap: 10px; margin-top: 15px; }
+  .option-btn {
+    background: #f8f9fa; border: 2px solid #e0e0e0; padding: 15px;
+    border-radius: 12px; font-size: 20px; cursor: pointer;
+    transition: 0.2s; text-align: center;
+  }
+  .option-btn:hover { border-color: #667eea; background: #eef2ff; }
+  .option-btn.correct { background: #d4edda; border-color: #27ae60; }
+  .option-btn.wrong { background: #f8d7da; border-color: #e74c3c; }
+  .phone-display {
+    font-size: 28px; letter-spacing: 3px; background: #f0f0f0;
+    padding: 15px; border-radius: 12px; text-align: center;
+    margin: 15px 0; min-height: 60px; font-family: monospace;
+    color: #2c3e50; transition: background 0.3s;
+  }
+  .keypad {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+    max-width: 280px; margin: 0 auto;
+  }
+  .keypad button {
+    background: #667eea; color: white; border: none; padding: 18px;
+    border-radius: 12px; font-size: 22px; cursor: pointer;
+    transition: 0.15s; font-weight: bold;
+  }
+  .keypad button:hover { background: #5568d3; transform: scale(1.05); }
+  .match-grid { display: grid; gap: 10px; margin: 15px 0; }
+  .match-item {
+    padding: 8px; border-radius: 12px; text-align: center;
+    cursor: pointer; font-size: 18px; border: 3px solid transparent;
+    transition: 0.2s; user-select: none;
+  }
+  .match-item.word {
+    background: #e3f2fd; color: #1565c0;
+    padding: 14px; display: flex; align-items: center; justify-content: center;
+  }
+  .match-item.person { background: #fff8e1; padding: 4px; }
+  .match-item.person svg { display: block; width: 100%; height: 110px; }
+  .match-item.selected { border-color: #ff9f43; transform: scale(1.05); }
+  .match-item.matched { background: #d4edda; opacity: 0.5; pointer-events: none; }
+  .match-item.wrong { border-color: #e74c3c; background: #f8d7da; }
+  .sentence-area {
+    background: #f8f9fa; padding: 20px; border-radius: 12px;
+    min-height: 70px; margin: 15px 0; font-size: 22px;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+    justify-content: center; border: 2px dashed #ccc; transition: border-color 0.3s;
+  }
+  .word-chip {
+    background: #667eea; color: white; padding: 10px 18px;
+    border-radius: 10px; cursor: pointer; font-size: 18px;
+    transition: 0.2s; user-select: none;
+  }
+  .word-chip:hover { background: #5568d3; transform: scale(1.05); }
+  .word-chip.used { opacity: 0.3; pointer-events: none; }
+  .final-rank {
+    font-size: 24px; text-align: center; margin: 20px 0; padding: 20px;
+    background: linear-gradient(135deg, #ffeaa7, #fdcb6e);
+    border-radius: 15px; color: #2c3e50;
+  }
+  .restart-btn { background: #e74c3c; width: 100%; padding: 14px; font-size: 16px; }
+  .restart-btn:hover { background: #c0392b; }
+  .prompt-text { font-size: 22px; text-align: center; margin: 15px 0; color: #2c3e50; }
+  .lesson-tag {
+    display: inline-block; font-size: 13px; background: #667eea;
+    color: white; padding: 3px 10px; border-radius: 10px; margin-bottom: 8px;
+  }
+  .nav-bar {
+    display: flex; gap: 8px; margin-top: 20px;
+    padding-top: 15px; border-top: 2px solid #f0f0f0;
+    align-items: center; justify-content: space-between;
+  }
+  .nav-btn {
+    background: #95a5a6; color: white; border: none;
+    padding: 10px 16px; border-radius: 10px; font-size: 14px;
+    cursor: pointer; transition: 0.2s; font-weight: 600;
+  }
+  .nav-btn:hover { background: #7f8c8d; }
+  .nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .nav-btn.skip { background: #ff9f43; }
+  .nav-btn.skip:hover { background: #e67e22; }
+  .level-dots {
+    display: flex; gap: 4px; flex-wrap: wrap;
+    justify-content: center; flex: 1; margin: 0 10px;
+  }
+  .level-dot {
+    width: 10px; height: 10px; border-radius: 50%;
+    background: #ddd; cursor: pointer; transition: 0.2s;
+  }
+  .level-dot.current { background: #667eea; transform: scale(1.4); }
+  .level-dot.done { background: #2ecc71; }
+  .level-dot:hover { transform: scale(1.3); }
+  .completed-badge {
+    text-align: center; padding: 30px 20px; background: #d4edda;
+    border-radius: 15px; margin: 20px 0;
+  }
+  .completed-badge .check { font-size: 60px; }
+  .completed-badge p { font-size: 20px; color: #27ae60; margin-top: 10px; font-weight: 600; }
+  .bonus-box {
+    background: linear-gradient(135deg, #fff9e6, #ffe4b5);
+    border-radius: 20px; padding: 25px; margin: 20px 0;
+    border: 3px dashed #ff9f43;
+  }
+  .bonus-box h2 { color: #d35400; text-align: center; margin-bottom: 15px; }
+  .cartoon-list { list-style: none; padding: 0; }
+  .cartoon-list li {
+    background: white; padding: 15px 18px; border-radius: 12px;
+    margin-bottom: 12px; box-shadow: 0 3px 10px rgba(0,0,0,0.08);
+  }
+  .cartoon-list a {
+    color: #e74c3c; text-decoration: none; font-weight: bold;
+    font-size: 17px; display: inline-block; margin-right: 10px;
+  }
+  .cartoon-list a:hover { text-decoration: underline; }
+  .cartoon-list p { color: #666; font-size: 14px; margin-top: 5px; }
+  .word-hint {
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+    margin-top: 15px;
+  }
+  .word-hint span {
+    background: #667eea; color: white; padding: 6px 14px;
+    border-radius: 20px; font-size: 16px;
+  }
+  .platform-btn {
+    display: inline-block; background: #3498db; color: white;
+    padding: 6px 12px; border-radius: 8px; font-size: 13px;
+    text-decoration: none; margin: 3px;
+  }
+  .platform-btn:hover { background: #2980b9; }
+  .platform-btn.vk { background: #4a76a8; }
+  .platform-btn.rutube { background: #e74c3c; }
+  .platform-btn.yandex { background: #fc3f1d; }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="score-box">⭐ <span id="score">0</span></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress"></div></div>
+    <div style="font-size:14px;color:#888;"><span id="stageNum">0</span>/<span id="totalNum">24</span></div>
+  </div>
+
+  <div id="stage-start" class="stage active">
+    <h1>🐼 中文大冒险 🐼</h1>
+    <div class="guide">
+      <div class="guide-avatar">👩‍🎓</div>
+      <div class="guide-text">
+        Привет! Я <strong>Бай Цзяюэ</strong>. Помоги мне пройти <strong>24 уровня</strong> по урокам 4–7.
+      </div>
+    </div>
+    <p style="text-align:center;color:#666;margin-bottom:15px;">~15 минут • Уроки 4–7</p>
+    <button class="btn btn-green" style="width:100%;padding:14px;font-size:16px;" onclick="startGame()">🚀 Начать</button>
+  </div>
+
+  <div id="stage" class="stage"></div>
+
+  <div id="stage-end" class="stage">
+    <h1>🎉 恭喜！ 🎉</h1>
+    <div class="final-rank" id="finalRank"></div>
+    <p style="text-align:center;font-size:18px;color:#555;margin:15px 0;">⭐ <strong id="finalScore">0</strong></p>
+
+    <div class="bonus-box">
+      <h2>🎁 Твой бонус — мультик! 🎁</h2>
+      <p style="text-align:center;color:#555;margin-bottom:15px;">
+        Ты прошла все уровни! Выбери платформу, которая работает в России:
+      </p>
+      <ul class="cartoon-list">
+        <li>
+          <strong>🐷 小猪佩奇 (Свинка Пеппа) — 中文版</strong>
+          <p>Короткие серии по 5 минут, простые диалоги про семью.</p>
+          <p>
+            <a class="platform-btn vk" href="https://vk.com/video?q=%E5%B0%8F%E7%8C%AA%E4%BD%A9%E5%A5%87%20%E4%B8%AD%E6%96%87" target="_blank">🔍 Искать в VK Video</a>
+            <a class="platform-btn yandex" href="https://yandex.ru/video/search?text=%E5%B0%8F%E7%8C%AA%E4%BD%A9%E5%A5%87%20%E4%B8%AD%E6%96%87%20%D0%A1%D0%B2%D0%B8%D0%BD%D0%BA%D0%B0%20%D0%9F%D0%B5%D0%BF%D0%BF%D0%B0" target="_blank">🔍 Искать в Яндекс.Видео</a>
+          </p>
+        </li>
+        <li>
+          <strong>👂 大耳朵图图 (Туту с большими ушами)</strong>
+          <p>Мультик про мальчика и его семью — много фраз «妈妈», «爸爸».</p>
+          <p>
+            <a class="platform-btn vk" href="https://vk.com/video?q=%E5%A4%A7%E8%80%B3%E6%9C%B5%E5%9B%BE%E5%9B%BE" target="_blank">🔍 Искать в VK Video</a>
+            <a class="platform-btn yandex" href="https://yandex.ru/video/search?text=%E5%A4%A7%E8%80%B3%E6%9C%B5%E5%9B%BE%E5%9B%BE%20%D0%A2%D1%83%D1%82%D1%83" target="_blank">🔍 Искать в Яндекс.Видео</a>
+          </p>
+        </li>
+        <li>
+          <strong>🐼 熊猫和小鼹鼠 (Панда и Кротик)</strong>
+          <p>История о дружбе — почти без слов, легко смотреть.</p>
+          <p>
+            <a class="platform-btn vk" href="https://vk.com/video?q=%E7%86%8A%E7%8C%AB%E5%92%8C%E5%B0%8F%E9%BC%B9%E9%BC%A0" target="_blank">🔍 Искать в VK Video</a>
+            <a class="platform-btn yandex" href="https://yandex.ru/video/search?text=%E7%86%8A%E7%8C%AB%E5%92%8C%E5%B0%8F%E9%BC%B9%E9%BC%A0%20%D0%9F%D0%B0%D0%BD%D0%B4%D0%B0%20%D0%B8%20%D0%9A%D1%80%D0%BE%D1%82%D0%B8%D0%BA" target="_blank">🔍 Искать в Яндекс.Видео</a>
+          </p>
+        </li>
+      </ul>
+      <p style="text-align:center;color:#555;margin-top:15px;font-weight:600;">
+        🔍 Слова, которые ты услышишь:
+      </p>
+      <div class="word-hint">
+        <span>你好</span>
+        <span>妈妈</span>
+        <span>爸爸</span>
+        <span>谢谢</span>
+        <span>再见</span>
+      </div>
+      <p style="text-align:center;color:#888;font-size:13px;margin-top:15px;">
+        💡 YouTube в России не работает — используй VK Video или Яндекс.Видео.
+      </p>
+    </div>
+
+    <button class="btn restart-btn" onclick="restartGame()">🔄 Играть снова</button>
+  </div>
+</div>
+
+<script>
+// ===== СОСТОЯНИЕ =====
+let score = 0;
+let currentLevel = 0;
+let completedLevels = new Set();
+
+// ===== SVG-ПЕРСОНАЖИ (задание 5) =====
+// Мама и папа — с чёрными волосами, в очках. Дети — без очков.
+const PERSON_SVGS = {
+  // МАМА — чёрные волосы, очки, пучок, длинное платье
+  mom: `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="126" rx="38" ry="5" fill="#00000015"/>
+    <path d="M18 70 Q14 30 50 22 Q86 30 82 70 L88 118 Q82 128 50 128 Q18 128 12 118 Z" fill="#8e44ad"/>
+    <rect x="44" y="56" width="12" height="14" fill="#f0c8a0"/>
+    <ellipse cx="50" cy="42" rx="23" ry="25" fill="#f5d0b0"/>
+    <path d="M24 40 Q22 8 50 6 Q78 8 76 40 L76 52 Q72 44 64 44 L64 36 Q58 26 50 26 Q42 26 36 36 L36 44 Q28 44 24 52 Z" fill="#1a1a1a"/>
+    <circle cx="50" cy="6" r="11" fill="#1a1a1a"/>
+    <circle cx="50" cy="6" r="5" fill="#2c2c2c"/>
+    <circle cx="42" cy="42" r="7" fill="none" stroke="#333" stroke-width="1.6"/>
+    <circle cx="58" cy="42" r="7" fill="none" stroke="#333" stroke-width="1.6"/>
+    <line x1="49" y1="42" x2="51" y2="42" stroke="#333" stroke-width="1.6"/>
+    <circle cx="42" cy="42" r="2" fill="#222"/>
+    <circle cx="58" cy="42" r="2" fill="#222"/>
+    <path d="M44 54 Q50 59 56 54" stroke="#c0392b" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <circle cx="26" cy="46" r="2.5" fill="#f1c40f"/>
+    <circle cx="74" cy="46" r="2.5" fill="#f1c40f"/>
+  </svg>`,
+
+  // ПАПА — чёрные волосы по бокам, лысина, усы, очки, галстук
+  dad: `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="126" rx="40" ry="5" fill="#00000015"/>
+    <path d="M20 72 L16 120 Q22 128 50 128 Q78 128 84 120 L80 72 Q50 78 20 72 Z" fill="#2c3e50"/>
+    <path d="M42 72 L50 95 L58 72 Z" fill="#ecf0f1"/>
+    <path d="M47 78 L50 74 L53 78 L52 95 L50 98 L48 95 Z" fill="#c0392b"/>
+    <rect x="44" y="58" width="12" height="14" fill="#e8b890"/>
+    <ellipse cx="50" cy="42" rx="23" ry="25" fill="#edc4a0"/>
+    <path d="M24 42 Q22 28 32 24 L32 38 Q28 40 26 46 Z" fill="#1a1a1a"/>
+    <path d="M76 42 Q78 28 68 24 L68 38 Q72 40 74 46 Z" fill="#1a1a1a"/>
+    <circle cx="42" cy="42" r="7" fill="none" stroke="#222" stroke-width="1.6"/>
+    <circle cx="58" cy="42" r="7" fill="none" stroke="#222" stroke-width="1.6"/>
+    <line x1="49" y1="42" x2="51" y2="42" stroke="#222" stroke-width="1.6"/>
+    <circle cx="42" cy="42" r="2" fill="#111"/>
+    <circle cx="58" cy="42" r="2" fill="#111"/>
+    <line x1="36" y1="33" x2="46" y2="33" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    <line x1="54" y1="33" x2="64" y2="33" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+    <path d="M40 52 Q50 49 60 52 Q56 57 50 56 Q44 57 40 52 Z" fill="#444"/>
+    <path d="M45 58 Q50 61 55 58" stroke="#8b4513" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  // СТАРШИЙ БРАТ — молодой, без очков, кепка
+  brother: `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="126" rx="30" ry="4" fill="#00000012"/>
+    <path d="M24 72 L20 118 Q26 128 50 128 Q74 128 80 118 L76 72 Q50 78 24 72 Z" fill="#27ae60"/>
+    <rect x="45" y="60" width="10" height="12" fill="#f0c8a0"/>
+    <ellipse cx="50" cy="44" rx="19" ry="21" fill="#f5d0b0"/>
+    <path d="M32 42 Q30 26 50 24 Q70 26 68 42 L68 46 Q64 40 58 40 L58 34 Q54 30 50 30 Q46 30 42 34 L42 40 Q36 40 32 46 Z" fill="#1a1a1a"/>
+    <path d="M30 32 Q50 22 70 32 Q50 28 30 32 Z" fill="#c0392b"/>
+    <circle cx="43" cy="44" r="2.2" fill="#111"/>
+    <circle cx="57" cy="44" r="2.2" fill="#111"/>
+    <path d="M45 52 Q50 56 55 52" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+  </svg>`,
+
+  // СТАРШАЯ СЕСТРА — молодая, хвостик с бантом, без очков
+  sister: `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="126" rx="30" ry="4" fill="#00000012"/>
+    <path d="M24 72 L20 118 Q26 128 50 128 Q74 128 80 118 L76 72 Q50 78 24 72 Z" fill="#e91e63"/>
+    <rect x="45" y="60" width="10" height="12" fill="#f5d0b0"/>
+    <ellipse cx="50" cy="44" rx="19" ry="21" fill="#f5d0b0"/>
+    <path d="M32 42 Q30 18 50 16 Q70 18 68 42 L68 48 Q64 42 58 42 L58 36 Q54 30 50 30 Q46 30 42 36 L42 42 Q36 42 32 48 Z" fill="#3d1f0a"/>
+    <ellipse cx="76" cy="38" rx="6" ry="12" fill="#3d1f0a"/>
+    <circle cx="76" cy="48" r="3" fill="#ff6b9d"/>
+    <circle cx="43" cy="44" r="2.3" fill="#111"/>
+    <circle cx="57" cy="44" r="2.3" fill="#111"/>
+    <path d="M45 52 Q50 56 55 52" stroke="#222" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="38" cy="50" rx="2.5" ry="1.7" fill="#ff8a9b" opacity="0.6"/>
+    <ellipse cx="62" cy="50" rx="2.5" ry="1.7" fill="#ff8a9b" opacity="0.6"/>
+  </svg>`,
+
+  // ДОЧЬ — маленькая девочка с косичками
+  daughter: `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="126" rx="22" ry="4" fill="#00000012"/>
+    <path d="M28 78 L24 116 Q30 126 50 126 Q70 126 76 116 L72 78 Q50 84 28 78 Z" fill="#f39c12"/>
+    <rect x="46" y="68" width="8" height="10" fill="#f5d0b0"/>
+    <ellipse cx="50" cy="52" rx="16" ry="18" fill="#f5d0b0"/>
+    <path d="M35 50 Q33 30 50 28 Q67 30 65 50 L65 54 Q61 46 57 46 L57 40 Q54 34 50 34 Q46 34 43 40 L43 46 Q39 46 35 54 Z" fill="#8b4513"/>
+    <circle cx="28" cy="54" r="6" fill="#8b4513"/>
+    <circle cx="72" cy="54" r="6" fill="#8b4513"/>
+    <circle cx="28" cy="54" r="2" fill="#ff6b9d"/>
+    <circle cx="72" cy="54" r="2" fill="#ff6b9d"/>
+    <circle cx="45" cy="52" r="1.8" fill="#111"/>
+    <circle cx="55" cy="52" r="1.8" fill="#111"/>
+    <path d="M46 58 Q50 61 54 58" stroke="#222" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+    <ellipse cx="40" cy="57" rx="2.3" ry="1.5" fill="#ff8a9b" opacity="0.7"/>
+    <ellipse cx="60" cy="57" rx="2.3" ry="1.5" fill="#ff8a9b" opacity="0.7"/>
+  </svg>`,
+
+  // СЫН — маленький мальчик со стрижкой
+  son: `<svg viewBox="0 0 100 130" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="50" cy="126" rx="22" ry="4" fill="#00000012"/>
+    <path d="M28 78 L24 116 Q30 126 50 126 Q70 126 76 116 L72 78 Q50 84 28 78 Z" fill="#3498db"/>
+    <rect x="46" y="68" width="8" height="10" fill="#f5d0b0"/>
+    <ellipse cx="50" cy="52" rx="16" ry="18" fill="#f5d0b0"/>
+    <path d="M36 48 Q34 28 50 26 Q66 28 64 48 L64 52 Q60 44 57 44 L57 38 Q54 34 50 34 Q46 34 43 38 L43 44 Q40 44 36 52 Z" fill="#1a1a1a"/>
+    <circle cx="45" cy="52" r="1.8" fill="#111"/>
+    <circle cx="55" cy="52" r="1.8" fill="#111"/>
+    <path d="M46 58 Q50 61 54 58" stroke="#222" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  </svg>`
+};
+
+// ===== РЕЧЬ =====
+function speakChinese(text, rate = 0.75) {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'zh-CN';
+  u.rate = rate;
+  u.pitch = 1.0;
+  speechSynthesis.speak(u);
+}
+
+// Живая речь для телефона: вступление быстро, цифры медленно
+function speakPhoneLively() {
+  if (!('speechSynthesis' in window)) return;
+  speechSynthesis.cancel();
+
+  // Вступление — живее и быстрее
+  const intro = new SpeechSynthesisUtterance('我的手机号是');
+  intro.lang = 'zh-CN';
+  intro.rate = 1.0;
+  intro.pitch = 1.15;
+  speechSynthesis.speak(intro);
+
+  // Цифры — медленно, с паузами
+  const digits = ['六', '零', '幺', '四', '九', '三', '幺', '九', '零'];
+  digits.forEach((d) => {
+    const u = new SpeechSynthesisUtterance(d + '，');
+    u.lang = 'zh-CN';
+    u.rate = 0.5;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    speechSynthesis.speak(u);
+  });
+}
+
+// ===== ВСПОМОГАТЕЛЬНЫЕ =====
+function addScore(pts) {
+  score += pts;
+  document.getElementById('score').textContent = score;
+}
+
+function updateProgress(i) {
+  document.getElementById('stageNum').textContent = Math.min(i + 1, LEVELS.length);
+  document.getElementById('progress').style.width = (completedLevels.size / LEVELS.length * 100) + '%';
+}
+
+function shuffle(a) { return [...a].sort(() => Math.random() - 0.5); }
+
+// ===== ГЕНЕРАТОРЫ УРОВНЕЙ =====
+function makeChoiceInit(prompt, options, correct, points = 10) {
+  return function(stage, onComplete) {
+    if (prompt) {
+      const p = document.createElement('p');
+      p.className = 'prompt-text';
+      p.textContent = prompt;
+      stage.appendChild(p);
+    }
+    const box = document.createElement('div');
+    box.className = 'options';
+    let locked = false;
+    shuffle(options).forEach(opt => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => {
+        if (locked) return;
+        if (opt === correct) {
+          locked = true;
+          btn.classList.add('correct');
+          onComplete(points);
+        } else {
+          btn.classList.add('wrong');
+          setTimeout(() => btn.classList.remove('wrong'), 700);
+        }
+      };
+      box.appendChild(btn);
+    });
+    stage.appendChild(box);
+  };
+}
+
+function makeAudioChoiceInit(audioText, options, correct, points = 10, rate = 0.75) {
+  return function(stage, onComplete) {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-audio';
+    btn.textContent = '🔊 听';
+    btn.onclick = () => speakChinese(audioText, rate);
+    stage.appendChild(btn);
+
+    const box = document.createElement('div');
+    box.className = 'options';
+    let locked = false;
+    shuffle(options).forEach(opt => {
+      const b = document.createElement('button');
+      b.className = 'option-btn';
+      b.textContent = opt;
+      b.onclick = () => {
+        if (locked) return;
+        if (opt === correct) {
+          locked = true;
+          b.classList.add('correct');
+          onComplete(points);
+        } else {
+          b.classList.add('wrong');
+          setTimeout(() => b.classList.remove('wrong'), 700);
+        }
+      };
+      box.appendChild(b);
+    });
+    stage.appendChild(box);
+  };
+}
+
+function makeMatchInit(pairs, points = 5, columns = 2) {
+  return function(stage, onComplete) {
+    const grid = document.createElement('div');
+    grid.className = 'match-grid';
+    grid.style.gridTemplateColumns = 'repeat(' + columns + ', 1fr)';
+    let selectedWord = null;
+    let matched = 0;
+    let locked = false;
+
+    shuffle(pairs).forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'match-item word';
+      d.textContent = p.word;
+      d.dataset.word = p.word;
+      d.onclick = () => {
+        if (locked || d.classList.contains('matched')) return;
+        grid.querySelectorAll('.match-item.word').forEach(w => w.classList.remove('selected'));
+        d.classList.add('selected');
+        selectedWord = d;
+      };
+      grid.appendChild(d);
+    });
+    shuffle(pairs).forEach(p => {
+      const d = document.createElement('div');
+      d.className = 'match-item person';
+      d.innerHTML = p.svg;
+      d.dataset.word = p.word;
+      d.onclick = () => {
+        if (locked || !selectedWord || d.classList.contains('matched')) return;
+        if (selectedWord.dataset.word === d.dataset.word) {
+          selectedWord.classList.add('matched');
+          d.classList.add('matched');
+          selectedWord.classList.remove('selected');
+          selectedWord = null;
+          matched++;
+          addScore(points);
+          if (matched === pairs.length) {
+            locked = true;
+            setTimeout(() => onComplete(0), 500);
+          }
+        } else {
+          d.classList.add('wrong');
+          setTimeout(() => d.classList.remove('wrong'), 600);
+        }
+      };
+      grid.appendChild(d);
+    });
+    stage.appendChild(grid);
+  };
+}
+
+function makeKeypadInit(target, audioText, points = 15) {
+  return function(stage, onComplete) {
+    const audioBtn = document.createElement('button');
+    audioBtn.className = 'btn btn-audio';
+    audioBtn.textContent = '🔊 听手机号';
+    audioBtn.onclick = () => speakPhoneLively();
+    stage.appendChild(audioBtn);
+
+    const display = document.createElement('div');
+    display.className = 'phone-display';
+    stage.appendChild(display);
+
+    let input = '';
+    const render = () => {
+      let d = '';
+      for (let i = 0; i < target.length; i++) {
+        d += (i < input.length ? input[i] : '_') + ' ';
+      }
+      display.textContent = d.trim();
+    };
+    render();
+
+    const keypad = document.createElement('div');
+    keypad.className = 'keypad';
+    ['1','2','3','4','5','6','7','8','9','0'].forEach(d => {
+      const b = document.createElement('button');
+      b.textContent = d;
+      b.onclick = () => {
+        if (input.length < target.length) {
+          input += d;
+          render();
+        }
+      };
+      keypad.appendChild(b);
+    });
+    const clear = document.createElement('button');
+    clear.textContent = 'C';
+    clear.style.background = '#e74c3c';
+    clear.onclick = () => { input = ''; render(); };
+    keypad.appendChild(clear);
+
+    const check = document.createElement('button');
+    check.textContent = '📞';
+    check.style.background = '#2ecc71';
+    check.onclick = () => {
+      if (input === target) {
+        onComplete(points);
+      } else {
+        display.style.background = '#f8d7da';
+        setTimeout(() => { display.style.background = '#f0f0f0'; }, 600);
+      }
+    };
+    keypad.appendChild(check);
+
+    stage.appendChild(keypad);
+  };
+}
+
+function makeMultiSentenceInit(sentences, pointsPerSentence = 10) {
+  return function(stage, onComplete) {
+    let currentIdx = 0;
+    const container = document.createElement('div');
+    stage.appendChild(container);
+
+    function renderSentence() {
+      container.innerHTML = '';
+      const guideText = stage.querySelector('.guide-text');
+      if (guideText) {
+        guideText.innerHTML = 'Предложение <strong>' + (currentIdx + 1) + '</strong> из ' + sentences.length +
+          '<br>' + sentences[currentIdx].hint;
+      }
+
+      const area = document.createElement('div');
+      area.className = 'sentence-area';
+      container.appendChild(area);
+
+      const poolEl = document.createElement('div');
+      poolEl.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-bottom:10px;';
+      container.appendChild(poolEl);
+
+      let built = [];
+      shuffle(sentences[currentIdx].pool).forEach(w => {
+        const chip = document.createElement('div');
+        chip.className = 'word-chip';
+        chip.textContent = w;
+        chip.onclick = () => {
+          if (chip.classList.contains('used')) return;
+          built.push(w);
+          chip.classList.add('used');
+          area.innerHTML = built.join(' ');
+          if (built.length === sentences[currentIdx].correct.length) {
+            if (JSON.stringify(built) === JSON.stringify(sentences[currentIdx].correct)) {
+              addScore(pointsPerSentence);
+              currentIdx++;
+              if (currentIdx >= sentences.length) {
+                onComplete(0);
+              } else {
+                setTimeout(renderSentence, 700);
+              }
+            } else {
+              area.style.borderColor = '#e74c3c';
+              setTimeout(() => {
+                area.style.borderColor = '#ccc';
+                built = [];
+                area.innerHTML = '';
+                poolEl.querySelectorAll('.word-chip').forEach(c => c.classList.remove('used'));
+              }, 700);
+            }
+          }
+        };
+        poolEl.appendChild(chip);
+      });
+    }
+    renderSentence();
+  };
+}
+
+// ===== КОНФИГ УРОВНЕЙ =====
+const LEVELS = [
+  // ============ УРОК 4 ============
+  { lesson: 4, title: '听数字',
+    guide: 'Прослушай число и выбери правильный вариант.',
+    init: makeAudioChoiceInit('二十八', ['二十八', '三十八', '四十八'], '二十八') },
+  { lesson: 4, title: '听数字',
+    guide: 'Прослушай число и выбери правильный вариант.',
+    init: makeAudioChoiceInit('九十九', ['七十九', '九十九', '六十九'], '九十九') },
+  { lesson: 4, title: '有字句',
+    guide: 'Выбери правильное счётное слово.',
+    init: makeChoiceInit('我家有四___人。', ['口', '个', '本'], '口') },
+  { lesson: 4, title: '有字句',
+    guide: 'Выбери правильный перевод: «У неё есть старшая сестра.»',
+    init: makeChoiceInit(null, ['她有一个姐姐', '她有一个妹妹', '她没有姐姐'], '她有一个姐姐') },
+  { lesson: 4, title: '家人',
+    guide: 'Соедини слово с картинкой. Мама и папа — в очках. Старшие брат и сестра — молодые, без очков.',
+    init: makeMatchInit([
+      { word: '妈妈', svg: PERSON_SVGS.mom },
+      { word: '爸爸', svg: PERSON_SVGS.dad },
+      { word: '哥哥', svg: PERSON_SVGS.brother },
+      { word: '姐姐', svg: PERSON_SVGS.sister },
+      { word: '女儿', svg: PERSON_SVGS.daughter },
+      { word: '儿子', svg: PERSON_SVGS.son }
+    ], 5, 3) },
+  { lesson: 4, title: '几岁 / 多大',
+    guide: 'Какой вопрос задать 5-летнему ребёнку?',
+    init: makeChoiceInit(null, ['你几岁？', '你多大？', '你多少岁？'], '你几岁？') },
+
+  // ============ УРОК 5 ============
+  { lesson: 5, title: '听日期',
+    guide: 'Прослушай дату и выбери правильный вариант.',
+    init: makeAudioChoiceInit('五月八号', ['5月8号', '8月5号', '5月18号'], '5月8号') },
+  { lesson: 5, title: '星期',
+    guide: 'Выбери правильный день недели.',
+    init: makeChoiceInit('明天是星期六，今天是___。', ['星期五', '星期日', '星期四'], '星期五') },
+  { lesson: 5, title: '会',
+    guide: 'Выбери правильное предложение.',
+    init: makeChoiceInit(null, ['我会做饭', '我会做面条儿', '我会做饺子'], '我会做面条儿') },
+  { lesson: 5, title: '食物',
+    guide: 'Соедини слово и картинку.',
+    init: makeMatchInit([
+      { word: '面条儿', svg: '<div style="font-size:60px;text-align:center;padding:10px;">🍜</div>' },
+      { word: '饺子', svg: '<div style="font-size:60px;text-align:center;padding:10px;">🥟</div>' },
+      { word: '米饭', svg: '<div style="font-size:60px;text-align:center;padding:10px;">🍚</div>' },
+      { word: '菜', svg: '<div style="font-size:60px;text-align:center;padding:10px;">🥬</div>' }
+    ], 5, 2) },
+
+  // ============ УРОК 6 ============
+  { lesson: 6, title: '手机号',
+    guide: 'Прослушай номер и набери его. В номерах 一 читается как 幺 (yāo).',
+    init: makeKeypadInit('601493190', '我的手机号是，六零幺四九三幺九零') },
+  { lesson: 6, title: '怎么去？',
+    guide: 'Как спросить «Как мы поедем?»',
+    init: makeChoiceInit(null, ['我们怎么去？', '我们去哪儿？', '我们几点去？'], '我们怎么去？') },
+  { lesson: 6, title: '怎么去？',
+    guide: 'Выбери правильный ответ.',
+    init: makeChoiceInit('我们怎么去西安饭店？', ['坐出租车去', '在西安饭店吃', '去西安饭店买'], '坐出租车去') },
+  { lesson: 6, title: '想',
+    guide: 'Выбери правильное предложение: «Я хочу пойти в супермаркет.»',
+    init: makeChoiceInit(null, ['我想去超市', '我去超市想', '想我去超市'], '我想去超市') },
+  { lesson: 6, title: '连动句',
+    guide: '',
+    init: makeMultiSentenceInit([
+      {
+        correct: ['我', '想', '去', '超市', '买', '牛奶'],
+        pool: ['我', '想', '去', '超市', '买', '牛奶'],
+        hint: 'Я хочу пойти в супермаркет купить молоко'
+      },
+      {
+        correct: ['我们', '坐', '出租车', '去', '电影院'],
+        pool: ['我们', '坐', '出租车', '去', '电影院'],
+        hint: 'Мы едем на такси в кинотеатр'
+      },
+      {
+        correct: ['我', '想', '去', '超市', '买', '东西'],
+        pool: ['我', '想', '去', '超市', '买', '东西'],
+        hint: 'Я хочу пойти в супермаркет купить вещи'
+      },
+      {
+        correct: ['我', '去', '商店', '买', '菜'],
+        pool: ['我', '去', '商店', '买', '菜'],
+        hint: 'Я иду в магазин купить овощи'
+      }
+    ], 10) },
+
+  // ============ УРОК 7 ============
+  { lesson: 7, title: '听时间 (1)',
+    guide: 'Прослушай время суток и выбери правильный вариант в 24-часовом формате.',
+    init: makeAudioChoiceInit('早上八点四十', ['8:40', '20:40', '18:40'], '8:40') },
+  { lesson: 7, title: '听时间 (2)',
+    guide: 'Прослушай время суток и выбери правильный вариант.',
+    init: makeAudioChoiceInit('上午十点十分', ['10:10', '22:10', '12:10'], '10:10') },
+  { lesson: 7, title: '听时间 (3)',
+    guide: 'Прослушай время суток и выбери правильный вариант.',
+    init: makeAudioChoiceInit('下午两点半', ['14:30', '2:30', '16:30'], '14:30') },
+  { lesson: 7, title: '听时间 (4)',
+    guide: 'Прослушай время суток и выбери правильный вариант.',
+    init: makeAudioChoiceInit('晚上六点半', ['18:30', '6:30', '8:30'], '18:30') },
+  { lesson: 7, title: '听时间 (5)',
+    guide: 'Прослушай время суток и выбери правильный вариант.',
+    init: makeAudioChoiceInit('中午十二点', ['12:00', '0:00', '2:00'], '12:00') },
+  { lesson: 7, title: '吧 / 呢',
+    guide: 'Выбери частицу для предложения-совета.',
+    init: makeChoiceInit('我们下午三点见___。', ['吧', '呢', '吗'], '吧') },
+  { lesson: 7, title: '吧 / 呢',
+    guide: 'Выбери частицу для подтверждения факта.',
+    init: makeChoiceInit('我明天下午两点还上课___。', ['吧', '呢', '吗'], '呢') },
+  { lesson: 7, title: '状语位置',
+    guide: 'Выбери правильный порядок слов.',
+    init: makeChoiceInit(null, ['我下午不去学校', '我不去学校下午', '下午我学校不去'], '我下午不去学校') },
+  { lesson: 7, title: '状语位置',
+    guide: 'Выбери правильный порядок слов.',
+    init: makeChoiceInit(null, ['她上午十点半上课', '她上课上午十点半', '上午她十点半上课'], '她上午十点半上课') }
+];
+
+// ===== УПРАВЛЕНИЕ =====
+function startGame() {
+  score = 0;
+  currentLevel = 0;
+  completedLevels = new Set();
+  document.getElementById('score').textContent = 0;
+  document.getElementById('totalNum').textContent = LEVELS.length;
+  showLevel(0);
+}
+
+function showLevel(i) {
+  if (i < 0) i = 0;
+  if (i >= LEVELS.length) { showEnd(); return; }
+  currentLevel = i;
+  updateProgress(i);
+
+  const level = LEVELS[i];
+  const stage = document.getElementById('stage');
+  stage.innerHTML = '';
+  stage.classList.add('active');
+  document.getElementById('stage-start').classList.remove('active');
+  document.getElementById('stage-end').classList.remove('active');
+
+  const tag = document.createElement('span');
+  tag.className = 'lesson-tag';
+  tag.textContent = '第' + level.lesson + '课 • Уровень ' + (i + 1);
+  stage.appendChild(tag);
+
+  const h2 = document.createElement('h2');
+  h2.textContent = level.title;
+  stage.appendChild(h2);
+
+  const guide = document.createElement('div');
+  guide.className = 'guide';
+  guide.innerHTML = '<div class="guide-avatar">👩‍🎓</div><div class="guide-text">' + level.guide + '</div>';
+  stage.appendChild(guide);
+
+  if (completedLevels.has(i)) {
+    const badge = document.createElement('div');
+    badge.className = 'completed-badge';
+    badge.innerHTML = '<div class="check">✅</div><p>Уровень уже пройден</p>';
+    stage.appendChild(badge);
+  } else {
+    level.init(stage, (points) => {
+      if (!completedLevels.has(i)) {
+        addScore(points);
+        completedLevels.add(i);
+        updateProgress(i);
+      }
+      setTimeout(() => showLevel(i + 1), 800);
+    });
+  }
+
+  buildNav(stage, i);
+}
+
+function buildNav(stage, i) {
+  const nav = document.createElement('div');
+  nav.className = 'nav-bar';
+
+  const back = document.createElement('button');
+  back.className = 'nav-btn';
+  back.textContent = '←';
+  back.disabled = i === 0;
+  back.onclick = () => showLevel(i - 1);
+  nav.appendChild(back);
+
+  const dots = document.createElement('div');
+  dots.className = 'level-dots';
+  LEVELS.forEach((_, idx) => {
+    const dot = document.createElement('div');
+    dot.className = 'level-dot';
+    if (idx === i) dot.classList.add('current');
+    if (completedLevels.has(idx)) dot.classList.add('done');
+    dot.title = 'Уровень ' + (idx + 1);
+    dot.onclick = () => showLevel(idx);
+    dots.appendChild(dot);
+  });
+  nav.appendChild(dots);
+
+  if (!completedLevels.has(i)) {
+    const skip = document.createElement('button');
+    skip.className = 'nav-btn skip';
+    skip.textContent = 'Пропустить →';
+    skip.onclick = () => showLevel(i + 1);
+    nav.appendChild(skip);
+  }
+
+  const fwd = document.createElement('button');
+  fwd.className = 'nav-btn';
+  fwd.textContent = '→';
+  fwd.disabled = i === LEVELS.length - 1;
+  fwd.onclick = () => showLevel(i + 1);
+  nav.appendChild(fwd);
+
+  stage.appendChild(nav);
+}
+
+function showEnd() {
+  document.querySelectorAll('.stage').forEach(s => s.classList.remove('active'));
+  document.getElementById('stage-end').classList.add('active');
+  updateProgress(LEVELS.length);
+  const rank = document.getElementById('finalRank');
+  let text = '';
+  if (score >= 250) text = '🏆 太棒了！你真厉害！';
+  else if (score >= 180) text = '🌟 很好！继续加油！';
+  else if (score >= 110) text = '👍 不错！还可以更好！';
+  else text = '📚 再复习一下 уроки 4–7!';
+  rank.textContent = text;
+  document.getElementById('finalScore').textContent = score + ' очков (пройдено ' + completedLevels.size + '/' + LEVELS.length + ')';
+}
+
+function restartGame() {
+  score = 0;
+  currentLevel = 0;
+  completedLevels = new Set();
+  document.getElementById('score').textContent = 0;
+  document.getElementById('stage-end').classList.remove('active');
+  document.getElementById('stage-start').classList.add('active');
+  updateProgress(0);
+}
+
+updateProgress(0);
+document.getElementById('totalNum').textContent = LEVELS.length;
+</script>
+</body>
+</html>
